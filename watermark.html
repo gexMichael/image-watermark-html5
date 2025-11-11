@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圖片(證件)浮水印工具</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, "PingFang SC", "Hiragino Sans GB", "WenQuanYi Micro Hei", sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 10px;
+            background-color: #5d5cde;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        @media (min-width: 640px) {
+            .container {
+                flex-direction: row;
+                height: calc(100vh - 40px);
+            }
+        }
+        
+        .sidebar {
+            background-color: rgba(136, 136, 136, 0.1);
+            width: 100%;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        @media (min-width: 640px) {
+            .sidebar {
+                width: 520px;
+                height: 100%;
+            }
+            
+            .sidebar-content {
+                height: calc(100vh - 180px);
+                overflow-y: auto;
+            }
+        }
+        
+        .content {
+            background-color: rgba(136, 136, 136, 0.1);
+            padding: 20px;
+            width: 100%;
+        }
+        
+        @media (min-width: 640px) {
+            .content {
+                background-color: white;
+                height: 100%;
+                overflow-y: auto;
+            }
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+        }
+        
+        .title {
+            font-size: 22px;
+            font-weight: bold;
+            margin: 20px 0;
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        
+        .github-link {
+            font-size: 12px;
+            color: #f56565;
+        }
+        
+        .github-icon {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 12px;
+            padding: 0 20px;
+        }
+        
+        .control-label {
+            min-width: 70px;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .switch-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ff4949;
+            transition: .4s;
+            border-radius: 26px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #5d5cde;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+        
+        textarea, input[type="text"], input[type="color"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        textarea {
+            min-height: 60px;
+            resize: vertical;
+        }
+        
+        .slider-container {
+            width: 100%;
+            padding: 8px 0;
+        }
+        
+        .slider-input {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: #d3d3d3;
+            outline: none;
+        }
+        
+        .slider-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #5d5cde;
+            cursor: pointer;
+        }
+        
+        .slider-input::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #5d5cde;
+            cursor: pointer;
+        }
+        
+        .slider-value {
+            font-size: 12px;
+            margin-top: 4px;
+            text-align: center;
+        }
+        
+        .info-text {
+            display: none;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: 120px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            padding: 10px;
+        }
+        
+        @media (min-width: 640px) {
+            .info-text {
+                display: block;
+            }
+            
+            .mobile-title {
+                display: none;
+            }
+        }
+        
+        .file-input {
+            margin: 14px auto;
+            text-align: center;
+        }
+        
+        @media (min-width: 640px) {
+            .file-input {
+                margin: 40px auto;
+            }
+        }
+        
+        .download-section {
+            max-width: 520px;
+            width: 100%;
+            margin: 12px auto;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        @media (min-width: 640px) {
+            .download-section {
+                margin: 40px auto;
+            }
+        }
+        
+        .download-btn {
+            background-color: #5d5cde;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .download-btn:hover {
+            background-color: #4a49b8;
+        }
+        
+        .download-btn:disabled {
+            background-color: #aaa;
+            cursor: not-allowed;
+        }
+        
+        .progress-container {
+            margin-top: 12px;
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: #5d5cde;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .canvas-container {
+            text-align: center;
+            margin: 40px auto;
+            max-width: 520px;
+            width: 100%;
+            padding: 10px;
+        }
+        
+        canvas {
+            box-sizing: border-box;
+            width: 100%;
+            border: 1px dashed #aaa;
+            border-radius: 8px;
+            max-width: 100%;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <p>您的圖片只會在本機的瀏覽器內運行，不會發送到任何伺服器</p>
+    </div>
+    
+    <div class="container">
+        <div class="sidebar">
+            <div class="sidebar-content">
+                <div class="sidebar-header">
+                    <div class="title">
+                        圖片浮水印工具
+                        <a class="github-link" href="https://github.com/unilei/image-watermark-tool.git" target="_blank">
+                            <svg class="github-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">圖片完全覆蓋浮水印</label>
+                    <div class="switch-container">
+                        <label class="switch">
+                            <input type="checkbox" id="repeatSwitch" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">浮水印文字</label>
+                    <textarea id="watermarkText" placeholder="請輸入浮水印文字">僅供協會發起人驗證使用</textarea>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">浮水印顏色</label>
+                    <input type="color" id="watermarkColor" value="#0000ff">
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">浮水印透明度</label>
+                    <div class="slider-container">
+                        <input type="range" id="watermarkOpacity" class="slider-input" min="0" max="1" step="0.1" value="0.3">
+                        <div class="slider-value" id="opacityValue">0.3</div>
+                    </div>
+                </div>
+                
+                <div class="control-group" id="spacingControl">
+                    <label class="control-label">浮水印間距</label>
+                    <div class="slider-container">
+                        <input type="range" id="watermarkSpacing" class="slider-input" min="1" max="16" step="0.5" value="5">
+                        <div class="slider-value" id="spacingValue">5</div>
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label class="control-label">浮水印大小</label>
+                    <div class="slider-container">
+                        <input type="range" id="watermarkTextSize" class="slider-input" min="0.1" max="10" step="0.1" value="2">
+                        <div class="slider-value" id="sizeValue">2</div>
+                    </div>
+                </div>
+                
+                <div class="control-group" id="angleControl">
+                    <label class="control-label">浮水印角度</label>
+                    <div class="slider-container">
+                        <input type="range" id="watermarkAngle" class="slider-input" min="-90" max="90" step="1" value="30">
+                        <div class="slider-value" id="angleValue">30</div>
+                    </div>
+                </div>
+                
+                <div class="control-group hidden" id="singleAngleControl">
+                    <label class="control-label">浮水印角度</label>
+                    <div class="slider-container">
+                        <input type="range" id="watermarkSingleAngle" class="slider-input" min="-90" max="90" step="1" value="0">
+                        <div class="slider-value" id="singleAngleValue">0</div>
+                    </div>
+                </div>
+                
+                <div class="control-group hidden" id="xPosControl">
+                    <label class="control-label">浮水印左右位置</label>
+                    <div class="slider-container">
+                        <input type="range" id="singleXPos" class="slider-input" min="0" max="1000" step="1" value="0">
+                        <div class="slider-value" id="xPosValue">0</div>
+                    </div>
+                </div>
+                
+                <div class="control-group hidden" id="yPosControl">
+                    <label class="control-label">浮水印上下位置</label>
+                    <div class="slider-container">
+                        <input type="range" id="singleYPos" class="slider-input" min="0" max="1000" step="1" value="0">
+                        <div class="slider-value" id="yPosValue">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-text">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+                此工具完全在您的瀏覽器中運行，您的圖片不會發送到任何伺服器。上傳圖片後，您可以在圖片上添加自訂浮水印，然後下載帶浮水印的圖片。
+            </div>
+        </div>
+        
+        <div class="content">
+            <h1 class="title mobile-title">
+                圖片浮水印工具
+                <a class="github-link" href="https://github.com/unilei/image-watermark-tool.git" target="_blank">
+                    <svg class="github-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+                    </svg>
+                </a>
+            </h1>
+            
+            <div class="file-input">
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+            
+            <div class="download-section">
+                <button id="downloadBtn" class="download-btn" disabled>下載圖片</button>
+                <div class="progress-container hidden" id="progressContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+            </div>
+            
+            <div class="canvas-container">
+                <canvas id="canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 獲取DOM元素
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const fileInput = document.getElementById('fileInput');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        
+        // 浮水印設置
+        const watermarkSettings = {
+            text: document.getElementById('watermarkText').value,
+            color: document.getElementById('watermarkColor').value,
+            opacity: parseFloat(document.getElementById('watermarkOpacity').value),
+            spacing: parseFloat(document.getElementById('watermarkSpacing').value),
+            textSize: parseFloat(document.getElementById('watermarkTextSize').value),
+            angle: parseInt(document.getElementById('watermarkAngle').value),
+            singleAngle: parseInt(document.getElementById('watermarkSingleAngle').value),
+            xPos: parseInt(document.getElementById('singleXPos').value),
+            yPos: parseInt(document.getElementById('singleYPos').value),
+            repeat: document.getElementById('repeatSwitch').checked
+        };
+        
+        // 狀態變數
+        let canvasImage = null;
+        let fileObject = null;
+        let downloadLoading = false;
+        
+        // 初始化事件監聽器
+        function initEventListeners() {
+            // 檔輸入變化
+            fileInput.addEventListener('change', onFileChange);
+            
+            // 下載按鈕點擊
+            downloadBtn.addEventListener('click', handleDownload);
+            
+            // 浮水印設置變化
+            document.getElementById('watermarkText').addEventListener('input', waterMarkTextChange);
+            document.getElementById('watermarkColor').addEventListener('input', waterMarkColorChange);
+            document.getElementById('watermarkOpacity').addEventListener('input', updateOpacity);
+            document.getElementById('watermarkSpacing').addEventListener('input', updateSpacing);
+            document.getElementById('watermarkTextSize').addEventListener('input', updateTextSize);
+            document.getElementById('watermarkAngle').addEventListener('input', updateAngle);
+            document.getElementById('watermarkSingleAngle').addEventListener('input', updateSingleAngle);
+            document.getElementById('singleXPos').addEventListener('input', updateXPos);
+            document.getElementById('singleYPos').addEventListener('input', updateYPos);
+            document.getElementById('repeatSwitch').addEventListener('change', repeatStatusChange);
+        }
+        
+        // 檔選擇變化處理
+        function onFileChange(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            fileObject = file;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                canvasImage = new Image();
+                canvasImage.onload = function() {
+                    canvas.width = canvasImage.width;
+                    canvas.height = canvasImage.height;
+                    
+                    // 將上傳的圖片繪製到Canvas上
+                    ctx.drawImage(canvasImage, 0, 0, canvas.width, canvas.height);
+                    // 添加浮水印
+                    setWatermark();
+                    
+                    // 啟用下載按鈕
+                    downloadBtn.disabled = false;
+                    
+                    // 更新位置滑塊的最大值
+                    document.getElementById('singleXPos').max = canvas.width;
+                    document.getElementById('singleYPos').max = canvas.height;
+                    
+                    // 設置初始位置為居中
+                    if (watermarkSettings.repeat) {
+                        // 對於重複浮水印，不需要設置初始位置
+                    } else {
+                        const lines = watermarkSettings.text.split('\n');
+                        const textSize = watermarkSettings.textSize * Math.max(15, Math.min(canvas.width, canvas.height) / 25);
+                        
+                        // 計算文本寬度（取最長的一行）
+                        let maxWidth = 0;
+                        ctx.font = `bold ${textSize}px -apple-system,"Helvetica Neue",Helvetica,Arial,"PingFang SC","Hiragino Sans GB","WenQuanYi Micro Hei",sans-serif`;
+                        lines.forEach(line => {
+                            const width = ctx.measureText(line).width;
+                            if (width > maxWidth) maxWidth = width;
+                        });
+                        
+                        // 設置居中位置
+                        watermarkSettings.xPos = Math.ceil((canvas.width - maxWidth) / 2);
+                        watermarkSettings.yPos = Math.ceil((canvas.height - textSize * lines.length) / 2);
+                        
+                        document.getElementById('singleXPos').value = watermarkSettings.xPos;
+                        document.getElementById('singleYPos').value = watermarkSettings.yPos;
+                        document.getElementById('xPosValue').textContent = watermarkSettings.xPos;
+                        document.getElementById('yPosValue').textContent = watermarkSettings.yPos;
+                    }
+                };
+                canvasImage.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // 設置浮水印
+        function setWatermark() {
+            if (!canvasImage) return;
+            
+            // 清除畫布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 將上傳的圖片繪製到Canvas上
+            ctx.drawImage(canvasImage, 0, 0, canvas.width, canvas.height);
+            
+            const lines = watermarkSettings.text.split('\n');
+            const textSize = watermarkSettings.textSize * Math.max(15, Math.min(canvas.width, canvas.height) / 25);
+            
+            ctx.font = `bold ${textSize}px -apple-system,"Helvetica Neue",Helvetica,Arial,"PingFang SC","Hiragino Sans GB","WenQuanYi Micro Hei",sans-serif`;
+            ctx.fillStyle = watermarkSettings.color;
+            ctx.globalAlpha = watermarkSettings.opacity;
+            
+            // 保存當前繪圖狀態
+            ctx.save();
+            
+            // 當浮水印是鋪滿圖片場景下
+            if (watermarkSettings.repeat) {
+                // 設置文字傾斜角度
+                ctx.rotate(watermarkSettings.angle * Math.PI / 180);
+                
+                lines.forEach((line, lineIndex) => {
+                    const textWidth = ctx.measureText(line).width;
+                    const textHeight = textSize; // 估算文字高度
+                    const textMargin = ctx.measureText('哈').width;
+                    // 計算每行文字的高度，包括行間距
+                    const lineHeight = textSize + watermarkSettings.spacing * textSize;
+                    // 計算浮水印的寬度
+                    const diagonalLength = Math.sqrt(canvas.width ** 2 + canvas.height ** 2);
+                    
+                    if(watermarkSettings.angle >= 0) {
+                        const x = Math.ceil(diagonalLength / (textWidth + textMargin));
+                        const y = Math.ceil(canvas.height / (watermarkSettings.spacing * textHeight));
+                        
+                        // 計算繪製文本的 y 座標，考慮行索引和行高
+                        const startY = lineHeight * lineIndex;
+                        
+                        for (let i = 0; i < x; i++) {
+                            for (let j = -y; j < y; j++) {
+                                // 計算繪製文本的y座標，考慮行間距和行索引
+                                const yPos = startY + j * watermarkSettings.spacing * textHeight;
+                                
+                                ctx.fillText(line, (textWidth + textMargin) * i, yPos);
+                            }
+                        }
+                    } else {
+                        const x = Math.ceil(diagonalLength / (textWidth + textMargin));
+                        const y = Math.ceil(diagonalLength / (watermarkSettings.spacing * textHeight));
+                        // 計算繪製文本的 y 座標，考慮行索引和行高
+                        const startY = lineHeight * lineIndex;
+                        
+                        // watermarkAngle.value < 0
+                        for (let i = -x; i < x; i++) {
+                            for (let j = -y; j < y; j++) {
+                                // 計算繪製文本的y座標，考慮行間距和行索引
+                                const yPos = startY + j * watermarkSettings.spacing * textHeight;
+                                ctx.fillText(line, (textWidth + textMargin) * i, yPos);
+                            }
+                        }
+                    }
+                });
+            } else {
+                // 當浮水印不是鋪滿圖片場景下
+                ctx.rotate(watermarkSettings.singleAngle * Math.PI / 180);
+                
+                lines.forEach((line, lineIndex) => {
+                    // 計算繪製文本的 y 座標，考慮行索引和行高
+                    const startY = textSize * lineIndex + watermarkSettings.yPos;
+                    
+                    ctx.fillText(line, watermarkSettings.xPos, startY);
+                });
+            }
+            
+            // 恢復之前保存的繪圖狀態
+            ctx.restore();
+            
+            ctx.globalAlpha = 1; // 重置全域透明度
+        }
+        
+        // 下載處理
+        function handleDownload() {
+            if (!canvas || downloadLoading) return;
+            
+            downloadLoading = true;
+            downloadBtn.disabled = true;
+            progressContainer.classList.remove('hidden');
+            
+            // 類比下載進度
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 5;
+                progressBar.style.width = `${progress}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    
+                    // 創建下載連結
+                    const dataURL = canvas.toDataURL();
+                    const link = document.createElement('a');
+                    link.href = dataURL;
+                    link.download = fileObject ? fileObject.name : 'watermarked-image.png';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    // 重置狀態
+                    setTimeout(() => {
+                        downloadLoading = false;
+                        downloadBtn.disabled = false;
+                        progressContainer.classList.add('hidden');
+                        progressBar.style.width = '0%';
+                    }, 1000);
+                }
+            }, 50);
+        }
+        
+        // 浮水印設置變化處理函數
+        function waterMarkColorChange(e) {
+            watermarkSettings.color = e.target.value;
+            waterMarkTextChange();
+        }
+        
+        function waterMarkTextChange() {
+            watermarkSettings.text = document.getElementById('watermarkText').value;
+            setWatermark();
+        }
+        
+        function updateOpacity(e) {
+            watermarkSettings.opacity = parseFloat(e.target.value);
+            document.getElementById('opacityValue').textContent = watermarkSettings.opacity.toFixed(1);
+            waterMarkTextChange();
+        }
+        
+        function updateSpacing(e) {
+            watermarkSettings.spacing = parseFloat(e.target.value);
+            document.getElementById('spacingValue').textContent = watermarkSettings.spacing;
+            waterMarkTextChange();
+        }
+        
+        function updateTextSize(e) {
+            watermarkSettings.textSize = parseFloat(e.target.value);
+            document.getElementById('sizeValue').textContent = watermarkSettings.textSize.toFixed(1);
+            waterMarkTextChange();
+        }
+        
+        function updateAngle(e) {
+            watermarkSettings.angle = parseInt(e.target.value);
+            document.getElementById('angleValue').textContent = watermarkSettings.angle;
+            waterMarkTextChange();
+        }
+        
+        function updateSingleAngle(e) {
+            watermarkSettings.singleAngle = parseInt(e.target.value);
+            document.getElementById('singleAngleValue').textContent = watermarkSettings.singleAngle;
+            waterMarkTextChange();
+        }
+        
+        function updateXPos(e) {
+            watermarkSettings.xPos = parseInt(e.target.value);
+            document.getElementById('xPosValue').textContent = watermarkSettings.xPos;
+            waterMarkTextChange();
+        }
+        
+        function updateYPos(e) {
+            watermarkSettings.yPos = parseInt(e.target.value);
+            document.getElementById('yPosValue').textContent = watermarkSettings.yPos;
+            waterMarkTextChange();
+        }
+        
+        function repeatStatusChange(e) {
+            watermarkSettings.repeat = e.target.checked;
+            
+            // 顯示/隱藏相關控制項
+            if (watermarkSettings.repeat) {
+                document.getElementById('spacingControl').classList.remove('hidden');
+                document.getElementById('angleControl').classList.remove('hidden');
+                document.getElementById('singleAngleControl').classList.add('hidden');
+                document.getElementById('xPosControl').classList.add('hidden');
+                document.getElementById('yPosControl').classList.add('hidden');
+            } else {
+                document.getElementById('spacingControl').classList.add('hidden');
+                document.getElementById('angleControl').classList.add('hidden');
+                document.getElementById('singleAngleControl').classList.remove('hidden');
+                document.getElementById('xPosControl').classList.remove('hidden');
+                document.getElementById('yPosControl').classList.remove('hidden');
+            }
+            
+            waterMarkTextChange();
+        }
+        
+        // 初始化
+        initEventListeners();
+    </script>
+</body>
+</html>
